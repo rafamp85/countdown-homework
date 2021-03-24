@@ -9,6 +9,7 @@ class Countdown extends React.Component {
       hours: 0,
       min: 0,
       sec: 0,
+      noTime: false
     }
   }
 
@@ -21,39 +22,32 @@ class Countdown extends React.Component {
   }
 
   componentWillUnmount() {
+    this.setState({noTime: true});
     this.stop();
   }
 
+  /** Improved */
   calculateCountdown(endDate) {
-    let diff = (Date.parse(new Date(endDate)) - Date.parse(new Date())) / 1000;
+    const year = new Date(endDate).getFullYear();
 
-    const timeLeft = {
-      years: 0,
-      days: 0,
-      hours: 0,
-      min: 0,
-      sec: 0,
-      millisec: 0,
-    };
+    if( year < new Date().getFullYear() ) {
+      this.noMoreTimeLeft();
+      this.stop();
+    }
 
-    // calculate time difference between now and expected date
-    if (diff >= (365.25 * 86400)) { // 365.25 * 24 * 60 * 60
-      timeLeft.years = Math.floor(diff / (365.25 * 86400));
-      diff -= timeLeft.years * 365.25 * 86400;
+
+    const difference =+ new Date(`${year}-10-1`) - +new Date(); // Best diff instead using DIFF
+    let timeLeft = {}; // Simple and blank object without extra indeed code
+
+    // Best way to get time data instead a lot of ugly code...
+    if (difference > 0) {
+      timeLeft = {
+        days: Math.floor(difference / (1000 * 60 * 60 * 24)),
+        hours: Math.floor((difference / (1000 * 60 * 60)) % 24),
+        min: Math.floor((difference / 1000 / 60) % 60),
+        sec: Math.floor((difference / 1000) % 60)
+      };
     }
-    if (diff >= 86400) { // 24 * 60 * 60
-      timeLeft.days = Math.floor(diff / 86400);
-      diff -= timeLeft.days * 86400;
-    }
-    if (diff >= 3600) { // 60 * 60
-      timeLeft.hours = Math.floor(diff / 3600);
-      diff -= timeLeft.hours * 3600;
-    }
-    if (diff >= 60) {
-      timeLeft.min = Math.floor(diff / 60);
-      diff -= timeLeft.min * 60;
-    }
-    timeLeft.sec = diff;
 
     return timeLeft;
   }
@@ -62,40 +56,58 @@ class Countdown extends React.Component {
     clearInterval(this.interval);
   }
 
+  /** Improved */
   addLeadingZeros(value) {
-    value = String(value);
-    while (value.length < 2) {
-      value = '0' + value;
+    value = value.toString(); // Will always have data, whatever String() calls internally toString()
+
+    // Don't use WHILE is not needed its better O(1) instead O(n) 
+    return value.length < 2 ? '0' + value : value;  
+  }
+
+  /* New function */
+  noMoreTimeLeft() {
+    const countDown = this.state;
+    const values = Object.values(countDown).filter( val => val > 0);
+
+    if ( values.length <= 0 ) {
+      this.setState({noTime: true});
     }
-    return value;
   }
 
   render() {
     const countDown = this.state;
-
-    return (
-      <div className="Countdown">
-        <span className="countdown-col">
-          <strong>{this.addLeadingZeros(countDown.days)}</strong>
+    if ( this.state.noTime ) {
+      return (
+        <div><h1>TIME IS OVER</h1></div>
+      ) 
+    } else {
+      return (
+        <div className="countdown">
+          <span className="countdown-col">
           <span>{countDown.days === 1 ? 'Day' : 'Days'}</span>
-        </span>
-
-        <span className="countdown-col">
-          <strong>{this.addLeadingZeros(countDown.hours)}</strong>
+          <br/>
+            <strong className="countdown-num">{this.addLeadingZeros(countDown.days)}</strong>
+          </span>
+  
+          <span className="countdown-col">
           <span>Hours</span>
-        </span>
-
-        <span className="countdown-col">
-          <strong>{this.addLeadingZeros(countDown.min)}</strong>
+          <br/>
+            <strong className="countdown-num">{this.addLeadingZeros(countDown.hours)}</strong>
+          </span>
+  
+          <span className="countdown-col">
           <span>Min</span>
-        </span>
-
-        <span className="countdown-col">
-          <strong>{this.addLeadingZeros(countDown.sec)}</strong>
-          <span>Sec</span>
-        </span>
-      </div>
-    );
+          <br/>
+            <strong className="countdown-num">{this.addLeadingZeros(countDown.min)}</strong>
+          </span>
+  
+          <span className="countdown-col">
+          <span>Sec</span><br/>
+            <strong className="countdown-num">{this.addLeadingZeros(countDown.sec)}</strong>
+          </span>
+        </div>
+      );
+    }
   }
 }
 
